@@ -2,9 +2,9 @@
 export interface Recipe {
   id: string;
   name: string;
-  image: string;
   description: string;
-  cookingTime: string;
+  cooking_time: string;
   ingredients?: string[];
+  image?: string;
   steps?: string[];
 }
