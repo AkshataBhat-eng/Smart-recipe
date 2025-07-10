@@ -21,10 +21,6 @@ const Home = () => {
   const debouncedFetch = useMemo(() => {
     return debounce(
       (searchTerm: string, filterState: typeof filters) => {
-        debugger
-        if (searchTerm.trim().length === 0) {
-          return;
-        }
 
         setLoading(true);
         const filterParams: string[] = [];
@@ -57,6 +53,9 @@ const Home = () => {
   useEffect(() => {
     if (search.trim().length > 0) {
       debouncedFetch(search, filters);
+    }
+    else {
+      debouncedFetch("", filters)
     }
 
     return () => {
@@ -122,7 +121,7 @@ const Home = () => {
               className={`px-3 py-1.5 text-sm rounded-full font-body border ${filters.quick
                 ? "bg-primary text-white border-primary"
                 : "bg-white text-gray-700 border-gray-300"
-                } transition`}  
+                } transition`}
             >
               ⏱ Under 30 mins
             </button>
@@ -139,7 +138,17 @@ const Home = () => {
 
           {/* 🔄 Results */}
           {loading ? (
-            <p className="text-gray-500">Loading recipes...</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="h-64 bg-yellow-100 animate-pulse rounded-xl"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5, delay: i * 0.1 }}
+                />
+              ))}
+            </div>
           ) : recipes.length === 0 ? (
             <p className="text-gray-400">No matching recipes found 😢</p>
           ) : (

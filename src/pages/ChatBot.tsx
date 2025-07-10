@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import ChatMessage from "../components/ChatMessage";
 import LoadingSpinner from "../components/LoadingSpinner";
 import PrimaryButton from "../components/PrimaryButton";
+import axios from "axios";
 
 interface Message {
     role: "user" | "assistant";
@@ -12,35 +13,41 @@ const ChatBot = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
+    const chatEndRef = useRef<HTMLDivElement | null>(null);
+
+
 
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!input.trim()) return;
 
-        const newUserMessage: Message = { role: "user", content: input };
-        setMessages((prev) => [...prev, newUserMessage]);
+        const newMessage: Message = { role: "user", content: input };
+        const updatedMessages = [...messages, newMessage];
+        setMessages((prev) => [...prev, newMessage]);
         setInput("");
         setLoading(true);
-
-        try {
-            const response = await fetch("http://localhost:8000/api/chat/", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ messages: [...messages, newUserMessage] }),
-            });
-
-            const data = await response.json();
-            const aiMessage: Message = { role: "assistant", content: data.reply };
-            setMessages((prev) => [...prev, aiMessage]);
-        } catch (err) {
-            setMessages((prev) => [
-                ...prev,
-                { role: "assistant", content: "Sorry, something went wrong." },
-            ]);
-        }
-
-        setLoading(false);
+        axios.post("http://localhost:8000/api/chat/", {
+            messages: updatedMessages,
+        })
+            .then((res: any) => {
+                const reply = res.data.reply;
+                setMessages([...updatedMessages, { role: "assistant", content: reply }]);
+            })
+            .catch((err: any) => {
+                console.error("Chat error:", err);
+                setMessages([
+                    ...updatedMessages,
+                    { role: "assistant", content: "⚠️ Something went  wrong!" },
+                ])
+            })
+            .finally(() => {
+                setLoading(false);
+            })
     };
+
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages, loading]);
 
     return (
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
@@ -53,6 +60,7 @@ const ChatBot = () => {
                     <ChatMessage key={index} role={msg.role} content={msg.content} />
                 ))}
                 {loading && <LoadingSpinner />}
+                <div ref={chatEndRef} />
             </div>
 
             <form
